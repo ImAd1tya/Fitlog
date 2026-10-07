@@ -1,2 +1,23 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+@plugin "daisyui/theme" {
+  name: "fitlog";
+  default: true;
+  prefersdark: true;
+  color-scheme: dark;
+
+  --color-base-100: #0f1115;
+  --color-base-200: #0c0d10;
+  --color-base-300: #1c1f26;
+  --color-base-content: #d1d5db;
+
+  --color-primary: #c2f800;
+  --color-primary-content: #000000;
+
+  --color-secondary: #1a2312;
+  --color-secondary-content: #c2f800;
+
+  --color-neutral: #2d313b;
+  --color-neutral-content: #9ca3af; 
+}
