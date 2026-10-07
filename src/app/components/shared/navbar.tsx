@@ -69,29 +69,37 @@ export default function Navbar({ planCount = 0, savedCount = 0 }: NavbarProps) {
 
         {/* Right: status badges */}
         <div className="navbar-end min-w-0 flex-1 gap-2 font-[family-name:var(--font-inter)] sm:gap-6">
-          <div className="flex items-center gap-2">
+          <Link
+            href="/my-plan"
+            aria-label={`Plan, ${planCount} items. Go to My Plan`}
+            className="flex items-center gap-2 transition-opacity hover:opacity-80"
+          >
             <span className="hidden text-xs font-medium text-base-content sm:inline">
               Plan
             </span>
             <span
-              aria-label={`Plan: ${planCount}`}
+              aria-hidden="true"
               className="badge badge-primary badge-sm min-w-5 px-1 text-[11px] font-bold"
             >
               {planCount}
             </span>
-          </div>
+          </Link>
 
-          <div className="flex items-center gap-2">
+          <Link
+            href="/my-plan"
+            aria-label={`Saved, ${savedCount} items. Go to My Plan`}
+            className="flex items-center gap-2 transition-opacity hover:opacity-80"
+          >
             <span className="hidden text-xs font-medium text-neutral-content sm:inline">
               Saved
             </span>
             <span
-              aria-label={`Saved: ${savedCount}`}
+              aria-hidden="true"
               className="badge badge-outline badge-sm min-w-5 border-neutral px-1 text-[11px] font-medium text-base-content"
             >
               {savedCount}
             </span>
-          </div>
+          </Link>
         </div>
       </nav>
     </header>
