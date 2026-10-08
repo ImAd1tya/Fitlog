@@ -4,12 +4,13 @@ import { usePlan } from "@/app/components/providers/plan-provider";
 
 export default function WorkoutActions({ workoutId }: { workoutId: number }) {
   const { addToPlan, saveForLater } = usePlan();
+  const planId = String(workoutId);
 
   return (
     <div className="flex flex-wrap items-center gap-4">
       <button
         type="button"
-        onClick={() => addToPlan(workoutId)}
+        onClick={() => addToPlan(planId)}
         className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#ccff00] px-6 py-3 text-sm font-semibold leading-5 text-base-100 shadow-sm transition hover:bg-[#d8ff4d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#ccff00]"
       >
         <svg
@@ -35,7 +36,7 @@ export default function WorkoutActions({ workoutId }: { workoutId: number }) {
 
       <button
         type="button"
-        onClick={() => saveForLater(workoutId)}
+        onClick={() => saveForLater(planId)}
         className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-[#374151] px-6 py-3 text-sm font-medium leading-5 text-[#e5e7eb] transition hover:border-[#6b7280] hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e5e7eb]"
       >
         <svg
