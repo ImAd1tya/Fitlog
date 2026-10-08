@@ -19,7 +19,7 @@ export type WorkoutSummary = Pick<
   "id" | "name" | "image" | "equipment" | "duration" | "caloriesBurned" | "rating"
 >;
 
-const API_URL = "https://api.api-store.workers.dev/api/fitlog";
+const API_URL = "https://api.abcz.workers.dev/api/fitlog";
 
 export async function getWorkouts(): Promise<Workout[]> {
   const res = await fetch(API_URL, { next: { revalidate: 3600 } });
