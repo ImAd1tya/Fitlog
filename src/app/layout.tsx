@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "react-toastify/dist/ReactToastify.css";
 import "./globals.css";
-import Navbar from "./components/shared/Navbar";
+import Navbar from "./components/shared/navbar";
 import Footer from "./components/shared/Footer";
 import { PlanProvider } from "./components/providers/plan-provider";
 import { ToastContainer } from "react-toastify";
