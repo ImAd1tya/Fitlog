@@ -45,7 +45,7 @@ export default function MyPlanView({ workouts, loadError }: Props) {
     [itemsById, saved],
   );
 
-  // Metrics always describe today's plan, whichever tab is open.
+
   const totals = useMemo(
     () => ({
       exercises: planItems.length,
