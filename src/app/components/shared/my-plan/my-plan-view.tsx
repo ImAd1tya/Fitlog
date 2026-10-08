@@ -1,46 +1,39 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { usePlan } from "@/app/components/providers/plan-provider";
+import type { Workout } from "@/lib/workout";
 import EmptyState from "./empty-state";
 import MetricsSummary from "./metrics-summary";
 import PlanCard from "./plan-card";
 import PlanControls, { type SortKey, type Tab } from "./plan-controls";
-import { getPlanItem, type PlanItem } from "./plan-item";
+import { toPlanItem, type PlanItem } from "./plan-item";
 
-export default function MyPlanView() {
+type Props = {
+  workouts: Workout[];
+  loadError: boolean;
+};
+
+export default function MyPlanView({ workouts, loadError }: Props) {
   const {
-    plan, saved, isDone,
+    plan, saved, workouts: savedWorkoutDetails, isDone,
     toggleDone, removeFromPlan, removeFromSaved,
   } = usePlan();
 
   const [tab, setTab] = useState<Tab>("plan");
   const [sort, setSort] = useState<SortKey>("duration");
-  const [itemsById, setItemsById] = useState<Record<string, PlanItem>>({});
-
-  useEffect(() => {
-    let active = true;
-
-    const loadItems = async () => {
-      const ids = [...new Set([...plan, ...saved])];
-      const resolved = await Promise.all(
-        ids.map(async (id) => [id, await getPlanItem(id)] as const),
-      );
-
-      if (!active) return;
-
-      const nextItems = Object.fromEntries(
-        resolved.flatMap(([id, item]) => (item ? [[id, item]] : [])),
-      );
-
-      setItemsById(nextItems);
-    };
-
-    void loadItems();
-    return () => {
-      active = false;
-    };
-  }, [plan, saved]);
+  const itemsById = useMemo(
+    () => ({
+      ...Object.fromEntries(
+        Object.entries(savedWorkoutDetails).map(([id, workout]) => [id, toPlanItem(workout)]),
+      ),
+      ...Object.fromEntries(workouts.map((workout) => {
+        const item = toPlanItem(workout);
+        return [item.id, item];
+      })),
+    }),
+    [savedWorkoutDetails, workouts],
+  );
 
   const planItems = useMemo(
     () => plan.map((id) => itemsById[id]).filter((x): x is PlanItem => Boolean(x)),
@@ -72,8 +65,20 @@ export default function MyPlanView() {
     return list;
   }, [tab, sort, planItems, savedItems]);
 
+  const handleToggleDone = (item: PlanItem) => {
+    toggleDone(item.id);
+  };
+
+  const handleRemove = (item: PlanItem) => {
+    if (tab === "plan") {
+      removeFromPlan(item.id);
+    } else {
+      removeFromSaved(item.id);
+    }
+  };
+
   return (
-    <main className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-6 py-10 md:px-12">
+    <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-4 py-8 sm:px-6 md:px-12 md:py-10">
       <header className="flex flex-col gap-2">
         <h1 className="font-[family-name:var(--font-oswald)] text-3xl font-bold tracking-[-0.75px] text-white">
           MY PLAN
@@ -88,8 +93,18 @@ export default function MyPlanView() {
       <PlanControls tab={tab} onTab={setTab} sort={sort} onSort={setSort} />
 
       <section aria-label={tab === "plan" ? "Today’s plan" : "Saved workouts"}>
+        {loadError && visible.length < (tab === "plan" ? plan : saved).length && (
+          <div
+            role="alert"
+            className="rounded-2xl border border-[#232732] bg-[#14171e] p-6 text-sm text-[#d1d5db]"
+          >
+            Couldn&apos;t load workout details right now. Please refresh and try again.
+          </div>
+        )}
         {visible.length === 0 ? (
+          loadError && (tab === "plan" ? plan : saved).length > 0 ? null : (
           <EmptyState />
+          )
         ) : (
           <div className="flex flex-col gap-4">
             {visible.map((item) => (
@@ -98,15 +113,13 @@ export default function MyPlanView() {
                 item={item}
                 variant={tab}
                 done={tab === "plan" && isDone(item.id)}
-                onToggleDone={() => toggleDone(item.id)}
-                onRemove={() =>
-                  tab === "plan" ? removeFromPlan(item.id) : removeFromSaved(item.id)
-                }
+                onToggleDone={() => handleToggleDone(item)}
+                onRemove={() => handleRemove(item)}
               />
             ))}
           </div>
         )}
       </section>
-    </main>
+    </div>
   );
 }

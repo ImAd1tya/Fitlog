@@ -1,35 +1,36 @@
 import type { Metadata } from "next";
-import { Inter, Oswald } from "next/font/google";
+import "react-toastify/dist/ReactToastify.css";
 import "./globals.css";
-import { PlanProvider } from "./components/providers/plan-provider";
 import Navbar from "./components/shared/Navbar";
-
-const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
-const oswald = Oswald({
-  variable: "--font-oswald",
-  subsets: ["latin"],
-  weight: ["700"],
-});
+import Footer from "./components/shared/Footer";
+import { PlanProvider } from "./components/providers/plan-provider";
+import { ToastContainer } from "react-toastify";
 
 export const metadata: Metadata = {
-  title: "FitLog",
-  description: "Browse workouts and build your plan.",
+  title: "FitLog — Workout Library",
+  description: "Browse workouts, build your plan, and log your training. Train hard, log honest.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      data-theme="fitlog"
-      className={`${inter.variable} ${oswald.variable} scroll-smooth`}
-    >
-      <body className="min-h-screen bg-base-100 font-[family-name:var(--font-inter)] text-base-content antialiased">
+    <html lang="en">
+      <body className="flex min-h-screen flex-col">
         <PlanProvider>
           <Navbar />
-          {children}
+          <main className="flex-1">{children}</main>
+          <Footer />
         </PlanProvider>
+        <ToastContainer
+          position="bottom-right"
+          autoClose={2200}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark"
+        />
       </body>
     </html>
   );

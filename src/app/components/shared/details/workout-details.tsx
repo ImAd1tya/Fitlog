@@ -81,7 +81,7 @@ export default function WorkoutDetails({ workout }: { workout: Workout }) {
           </ol>
         </section>
 
-        <WorkoutActions workoutId={workout.id} />
+        <WorkoutActions workout={workout} />
       </div>
     </article>
   );

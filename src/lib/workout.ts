@@ -14,6 +14,11 @@ export type Workout = {
   instructions: string[];
 };
 
+export type WorkoutSummary = Pick<
+  Workout,
+  "id" | "name" | "image" | "equipment" | "duration" | "caloriesBurned" | "rating"
+>;
+
 const API_URL = "https://api.api-store.workers.dev/api/fitlog";
 
 export async function getWorkouts(): Promise<Workout[]> {

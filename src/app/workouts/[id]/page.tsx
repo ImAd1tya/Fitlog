@@ -8,6 +8,7 @@ type Props = { params: Promise<{ id: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const workout = await getWorkout(Number(id));
+
   return {
     title: workout ? `${workout.name} | FitLog` : "Workout not found | FitLog",
   };
@@ -20,8 +21,8 @@ export default async function WorkoutPage({ params }: Props) {
   if (!workout) notFound();
 
   return (
-    <main className="mx-auto max-w-[1280px] px-6 py-12">
+    <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 sm:py-12">
       <WorkoutDetails workout={workout} />
-    </main>
+    </div>
   );
 }

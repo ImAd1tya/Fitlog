@@ -6,28 +6,35 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
+import { toast } from "react-toastify";
+import type { WorkoutSummary } from "@/lib/workout";
 
 export const PLAN_CAP = 5;
 const STORAGE_KEY = "fitlog:plan:v1";
 
-type Stored = { plan: string[]; saved: string[]; done: string[] };
+type Stored = {
+  plan: string[];
+  saved: string[];
+  done: string[];
+  workouts: Record<string, WorkoutSummary>;
+};
 
 type PlanContextValue = {
   plan: string[];
   saved: string[];
   done: string[];
+  workouts: Record<string, WorkoutSummary>;
   planCount: number;
   savedCount: number;
   isInPlan: (id: string) => boolean;
   isSaved: (id: string) => boolean;
   isDone: (id: string) => boolean;
-  addToPlan: (id: string) => void;
-  addToSaved: (id: string) => void;
-  saveForLater: (id: string) => void;
+  addToPlan: (workout: WorkoutSummary) => void;
+  addToSaved: (workout: WorkoutSummary) => void;
+  saveForLater: (workout: WorkoutSummary) => void;
   removeFromPlan: (id: string) => void;
   removeFromSaved: (id: string) => void;
   toggleDone: (id: string) => void;
@@ -39,15 +46,43 @@ const PlanContext = createContext<PlanContextValue | null>(null);
 const toIds = (v: unknown): string[] =>
   Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
 
+const isWorkoutSummary = (value: unknown): value is WorkoutSummary =>
+  typeof value === "object" &&
+  value !== null &&
+  "id" in value &&
+  typeof value.id === "number" &&
+  "name" in value &&
+  typeof value.name === "string" &&
+  "image" in value &&
+  typeof value.image === "string" &&
+  "equipment" in value &&
+  typeof value.equipment === "string" &&
+  "duration" in value &&
+  typeof value.duration === "number" &&
+  "caloriesBurned" in value &&
+  typeof value.caloriesBurned === "number" &&
+  "rating" in value &&
+  typeof value.rating === "number";
+
+const toWorkoutSummaries = (value: unknown): Record<string, WorkoutSummary> => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+
+  return Object.fromEntries(
+    Object.entries(value).filter(
+      (entry): entry is [string, WorkoutSummary] => isWorkoutSummary(entry[1]),
+    ),
+  );
+};
+
 const readStored = (): Stored => {
   if (typeof window === "undefined") {
-    return { plan: [], saved: [], done: [] };
+    return { plan: [], saved: [], done: [], workouts: {} };
   }
 
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      return { plan: [], saved: [], done: [] };
+      return { plan: [], saved: [], done: [], workouts: {} };
     }
 
     const data = JSON.parse(raw) as Partial<Stored>;
@@ -55,48 +90,73 @@ const readStored = (): Stored => {
       plan: toIds(data.plan).slice(0, PLAN_CAP),
       saved: toIds(data.saved),
       done: toIds(data.done),
+      workouts: toWorkoutSummaries(data.workouts),
     };
   } catch {
-    return { plan: [], saved: [], done: [] };
+    return { plan: [], saved: [], done: [], workouts: {} };
   }
-};
+}
 
 export function PlanProvider({ children }: { children: ReactNode }) {
-  const [plan, setPlan] = useState<string[]>(() => readStored().plan);
-  const [saved, setSaved] = useState<string[]>(() => readStored().saved);
-  const [done, setDone] = useState<string[]>(() => readStored().done);
-  const [toast, setToast] = useState<{ id: number; message: string } | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [plan, setPlan] = useState<string[]>([]);
+  const [saved, setSaved] = useState<string[]>([]);
+  const [done, setDone] = useState<string[]>([]);
+  const [workouts, setWorkouts] = useState<Record<string, WorkoutSummary>>({});
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      const stored = readStored();
+      setPlan(stored.plan);
+      setSaved(stored.saved);
+      setDone(stored.done);
+      setWorkouts(stored.workouts);
+      setHydrated(true);
+    }, 0);
+
+    return () => window.clearTimeout(id);
+  }, []);
 
   // Persist after every change (only once loaded, so we never overwrite with empty state).
   useEffect(() => {
+    if (!hydrated) return;
+
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ plan, saved, done }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ plan, saved, done, workouts }));
     } catch {
       /* storage full / blocked */
     }
-  }, [plan, saved, done]);
+  }, [hydrated, plan, saved, done, workouts]);
 
   const notify = useCallback((message: string) => {
-    if (timer.current) clearTimeout(timer.current);
-    setToast({ id: Date.now(), message });
-    timer.current = setTimeout(() => setToast(null), 2200);
+    toast.info(message, {
+      position: "bottom-right",
+      autoClose: 2200,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
   }, []);
 
   const addToPlan = useCallback(
-    (id: string) => {
+    (workout: WorkoutSummary) => {
+      const id = String(workout.id);
       if (plan.includes(id)) return notify("Already in today's plan");
       if (plan.length >= PLAN_CAP) return notify("Plan is full — five lifts max");
       setPlan([...plan, id]);
+      setWorkouts((current) => ({ ...current, [id]: workout }));
       notify("Added to today's plan");
     },
     [plan, notify],
   );
 
   const addToSaved = useCallback(
-    (id: string) => {
+    (workout: WorkoutSummary) => {
+      const id = String(workout.id);
       if (saved.includes(id)) return notify("Already saved");
       setSaved([...saved, id]);
+      setWorkouts((current) => ({ ...current, [id]: workout }));
       notify("Saved for later");
     },
     [saved, notify],
@@ -133,6 +193,7 @@ export function PlanProvider({ children }: { children: ReactNode }) {
       plan,
       saved,
       done,
+      workouts,
       planCount: plan.length,
       savedCount: saved.length,
       isInPlan: (id) => plan.includes(id),
@@ -146,24 +207,10 @@ export function PlanProvider({ children }: { children: ReactNode }) {
       toggleDone,
       notify,
     }),
-    [plan, saved, done, addToPlan, addToSaved, removeFromPlan, removeFromSaved, toggleDone, notify],
+    [plan, saved, done, workouts, addToPlan, addToSaved, removeFromPlan, removeFromSaved, toggleDone, notify],
   );
 
-  return (
-    <PlanContext.Provider value={value}>
-      {children}
-      {toast && (
-        <div
-          key={toast.id}
-          role="status"
-          aria-live="polite"
-          className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full border border-[#2b303d] bg-[#1f242d] px-5 py-2.5 text-sm text-white shadow-lg"
-        >
-          {toast.message}
-        </div>
-      )}
-    </PlanContext.Provider>
-  );
+  return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>;
 }
 
 export function usePlan() {

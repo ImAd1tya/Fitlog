@@ -1,12 +1,15 @@
-import React from 'react';
-import Banner from './components/shared/Homepage/Banner';
-import Library from './components/shared/Homepage/Library';
+import { Suspense } from "react";
+import Banner from "@/app/components/shared/Homepage/Banner";
+import Library from "@/app/components/shared/Homepage/Library";
+import Spinner from "@/app/components/shared/Spinner";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <main className="mx-auto flex max-w-[1280px] flex-col gap-16 px-6 py-12">
+    <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 sm:py-12">
       <Banner />
-      <Library />
-    </main>
+      <Suspense fallback={<Spinner />}>
+        <Library />
+      </Suspense>
+    </div>
   );
 }
