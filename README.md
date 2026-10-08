@@ -52,5 +52,5 @@ src/
 ```
 
 <div align="center">
-© 2026 FitLog — Workout Library. Train hard, log honest.
+
 </div>
